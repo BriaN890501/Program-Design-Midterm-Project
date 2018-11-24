@@ -16,7 +16,7 @@ int X[max_m] = {0}, Y[max_m] = {0}, R[max_m] = {0}, P[max_m] = {0}; // coordinat
 int sx, sy, ex, ey; // coordinate of start and end points
 
 // defining functions
-void SimulatedAnnealing(); // 模擬退火 (main algorithm)
+void SimulatedAnnealing(); //  (main algorithm)
 
 void SearchForNewSolution(double X[], double Y[], int &T);
 
@@ -78,7 +78,6 @@ void SimulatedAnnealing()
     
     // setting the temperature
     int T = max_T;
-    
     while(T > 0)
     {
         SearchForNewSolution(routeX,routeY,T);
@@ -160,7 +159,6 @@ void SearchForNewSolution(double X[], double Y[], int &T)
         {
             // making a temporary route
             double tempRouteX[max_point], tempRouteY[max_point];
-            
             for(int i = 0; i < max_point; i++) 
             {
                 tempRouteX[i] = X[i];
@@ -269,5 +267,44 @@ int LengthOfRoute(double route[]) // # counting points? suggest change function 
 // temporarily consider threat as points
 double threat(double routeX[], double routeY[]) // # must implement right threat function, then consider runtime
 {
-    return LengthOfRoute(routeX);
+	int len = LengthOfRoute(routeX);	
+	double newX = routeX[0];
+	double newY = routeY[0];
+	double threat = 0;
+	double leftdis = 0;/*the distance left*/
+	double dis ;
+	for(int i = 1; i < len; i++)
+	{
+		double DisBetDots = sqrt(pow(routeX[i]-routeX[i-1],2) + pow(routeY[i]-routeY[i-1],2));
+		for(int j = 0; j < DisBetDots-1; j++)
+		{
+			if(j==0)
+			{
+				newX = newX + (1-leftdis)*(routeX[i]-routeX[i-1])/DisBetDots;
+				newY = newY + (1-leftdis)*(routeY[i]-routeY[i-1])/DisBetDots;
+			}
+			else
+			{
+				newX = newX + (routeX[i]-routeX[i-1])/DisBetDots;
+				newY = newY + (routeY[i]-routeY[i-1])/DisBetDots;
+			}
+			if(DisBetDots-2<j&&j<DisBetDots-1)
+				leftdis = sqrt(pow(routeX[i] - newX, 2) + pow(routeY[i] - newY, 2));
+			
+			
+			for(int k = 0;k < m; k++)
+			{
+				dis = sqrt(pow(X[k] - newX, 2)+pow(Y[k] - newY, 2));
+				if(dis>R[k])
+					continue;
+				threat = threat + P[k]*((R[k]-dis)/R[k]);
+			}
+			
+		}
+	}
+	
+	
+	
+		
+    return threat;
 }
