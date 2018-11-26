@@ -1,12 +1,14 @@
 #include <iostream> // "#" represents issues or possible changes
 #include <cmath>
 #include <time.h>
+#include<bits/stdc++.h>
+//#pragma optimize("Ofast")
 using namespace std;
 
 // max parameters
 const int max_n = 1000, max_m = 10000;
 
-const int max_point = 100, max_T = 10, max_k = 10; // points at most 100
+const int max_point = 100, max_T = 30, max_k = 2000; // points at most 100
 
 // definition
 int n, m, w, d; // map size / threat point amount / turning cost /max distance
@@ -16,7 +18,7 @@ int X[max_m] = {0}, Y[max_m] = {0}, R[max_m] = {0}, P[max_m] = {0}; // coordinat
 int sx, sy, ex, ey; // coordinate of start and end points
 
 // defining functions
-void SimulatedAnnealing(); //  (main algorithm)
+void SimulatedAnnealing(double A[], double B[], int z); //  (main algorithm)
 
 void SearchForNewSolution(double X[], double Y[], int &T);
 
@@ -56,12 +58,25 @@ int main()
 
     cin >> sx >> sy >> ex >> ey;
 
+    double routeX[max_point], routeY[max_point];
+    for(int i = 0;i<max_point;i++){routeX[i]=-1;routeY[i]=-1;}
     // program start
-    SimulatedAnnealing();
+    for(int i=1;i<4;i++)
+        SimulatedAnnealing(routeX, routeY, i);
+
+    int points = PointsOfRoute(routeX);
+
+    //cout << points - 2;
+
+    //for(int i = 1; i < points - 1; i++) // output result
+    //{
+    //    cout << " " << routeX[i] << " " << routeY[i];
+    //}
+
 
     return 0;
 }
-void SimulatedAnnealing()
+void SimulatedAnnealing(double A[], double B[], int z)
 {
     // definition and initialization
     double routeX[max_point], routeY[max_point]; // the x,y coordinate of the i th point in the route
@@ -80,16 +95,22 @@ void SimulatedAnnealing()
     int T = max_T;
     while(T > 0)
     {
-        SearchForNewSolution(routeX,routeY,T);
+        SearchForNewSolution(routeX, routeY, T);
     }
-
-    int points = PointsOfRoute(routeX);
-
-    cout << points - 2;
-
-    for(int i = 1; i < points - 1; i++) // output result
-    {
-        cout << " " << routeX[i] << " " << routeY[i];
+#ifdef DEBUG
+cout<<"main "<<threat(routeX,routeY)<<endl;
+#endif // DEBUG
+    if(z==1){
+        for(int i=0;i<max_point;i++){
+            A[i]=routeX[i];
+            B[i]=routeY[i];
+        }
+    }
+    else if(threat(A,B)<threat(routeX,routeY)){
+        for(int i=0;i<max_point;i++){
+            A[i]=routeX[i];
+            B[i]=routeY[i];
+        }
     }
 
 }
@@ -110,115 +131,117 @@ void SearchForNewSolution(double X[], double Y[], int &T)
     double tempbestthreat = threat(tempbestRouteX, tempbestRouteY);
     int temppoints = PointsOfRoute(tempbestRouteX);
 
-    // decide which to choose
-    int choose = rand() % 15; // # adjustment can be implemented (which interval)
-
-    // 0~2 for adding a point between s and e
-    if(choose <=2  && temppoints != max_point) // check range and valid operation
+    for(; k > 0; k--)
     {
-        for(; k > 0; k--)
+        // decide which to choose
+        int choose = rand() % 15; // # adjustment can be implemented (which interval)
+
+        // 0~2 for adding a point between s and e
+        if(choose <=2  && temppoints != max_point) // check range and valid operation
         {
-            // making a temporary route
-            double tempRouteX[max_point], tempRouteY[max_point];
+                // making a temporary route
+                double tempRouteX[max_point], tempRouteY[max_point];
 
-            for(int i = 0; i < max_point; i++)
-            {
-                tempRouteX[i] = X[i];
-                tempRouteY[i] = Y[i];
-            }
-
-            // making a random integer between 1 to len-1
-            int a = rand() % (temppoints - 1) + 1;
-
-            // finding a good coordinate(near the line of a th and a+1 th point) for new point
-            double x = rand() % static_cast<int> (tempRouteX[a] - tempRouteX[a - 1] + 1) + tempRouteX[a - 1];
-            double y = rand() % static_cast<int> (tempRouteY[a] - tempRouteY[a - 1] + 1) + tempRouteY[a - 1];
-
-            // shift points after a th point right
-            if( ( x!=tempRouteX[a] || y!=tempRouteY[a] ) && ( x!=tempRouteY[a+1] || y!=tempRouteY[a+1] ) )
-            {
-                for(int i = temppoints; i > a; i--)
+                for(int i = 0; i < max_point; i++)
                 {
-                    tempRouteX[i] = tempRouteX[i - 1];
-                    tempRouteY[i] = tempRouteY[i - 1];
+                    tempRouteX[i] = X[i];
+                    tempRouteY[i] = Y[i];
                 }
 
-                // insert the point
-                tempRouteX[a] = x;
-                tempRouteY[a] = y;
+                // making a random integer between 1 to len-1
+                int a = rand() % (temppoints - 1) + 1;
+
+                // finding a good coordinate(near the line of a th and a+1 th point) for new point
+                double x = rand() % static_cast<int> (tempRouteX[a] - tempRouteX[a - 1] + 1) + tempRouteX[a - 1];
+                double y = rand() % static_cast<int> (tempRouteY[a] - tempRouteY[a - 1] + 1) + tempRouteY[a - 1];
+
+                // shift points after a th point right
+                if( ( x!=tempRouteX[a-1] || y!=tempRouteY[a-1] ) && ( x!=tempRouteX[a] || y!=tempRouteY[a] ) )
+                {
+                    cout<<"Point add "<<x<<" "<<y<<endl<<"pre: "<<tempRouteX[a-1]<<" "<<tempRouteY[a-1]<<endl<<"next: "<<tempRouteX[a]<<" "<<tempRouteY[a]<<endl;
+
+                    for(int i = temppoints; i > a; i--)
+                    {
+                        tempRouteX[i] = tempRouteX[i - 1];
+                        tempRouteY[i] = tempRouteY[i - 1];
+                    }
+
+                    // insert the point
+                    tempRouteX[a] = x;
+                    tempRouteY[a] = y;
+
+                    UpdateSolution(tempbestRouteX, tempbestRouteY, tempRouteX, tempRouteY, T, tempbestthreat);
+                }
+            T--; // only if operation is effective that T minus
+        }
+
+        // 3~10 for taking a point out between s and e
+        else if(choose <= 10 && temppoints != 2) // check range and valid operation
+        {
+                // making a temporary route
+                double tempRouteX[max_point], tempRouteY[max_point];
+                for(int i = 0; i < max_point; i++)
+                {
+                    tempRouteX[i] = X[i];
+                    tempRouteY[i] = Y[i];
+                }
+
+                // making a random integer between 2 to len-1
+                int a = rand() % (temppoints - 2) + 2;
+
+                // shift point after a th point left
+                for(int i = a; i < temppoints; i++)
+                {
+                    tempRouteX[i - 1] = tempRouteX[i];
+                    tempRouteY[i - 1] = tempRouteY[i];
+                }
+
+                // delete the last point
+                tempRouteX[temppoints - 1] = -1;
+                tempRouteY[temppoints - 1] = -1;
 
                 UpdateSolution(tempbestRouteX, tempbestRouteY, tempRouteX, tempRouteY, T, tempbestthreat);
-            }
+            T--; // only if operation is effective that T minus
         }
-        T--; // only if operation is effective that T minus
-    }
 
-    // 3~10 for taking a point out between s and e
-    else if(choose <= 10 && temppoints != 2) // check range and valid operation
-    {
-        for(; k > 0; k--)
+        // 11~14 for changing the coordinate of a point
+        else if(choose <= 14 && temppoints != 2)
         {
-            // making a temporary route
-            double tempRouteX[max_point], tempRouteY[max_point];
-            for(int i = 0; i < max_point; i++)
-            {
-                tempRouteX[i] = X[i];
-                tempRouteY[i] = Y[i];
-            }
+                // making a temp route
+                double tempRouteX[max_point], tempRouteY[max_point];
 
-            // making a random integer between 2 to len-1
-            int a = rand() % (temppoints - 2) + 2;
+                for(int i = 0; i < max_point; i++)
+                {
+                    tempRouteX[i] = X[i];
+                    tempRouteY[i] = Y[i];
+                }
 
-            // shift point after a th point left
-            for(int i = a; i < temppoints; i++)
-            {
-                tempRouteX[i - 1] = tempRouteX[i];
-                tempRouteY[i - 1] = tempRouteY[i];
-            }
+                // making a random integer between 2 to len-1
+                int a = rand() % (temppoints - 2) + 2;
 
-            // delete the last point
-            tempRouteX[temppoints - 1] = -1;
-            tempRouteY[temppoints - 1] = -1;
+                // finding a good coordinate(near the line of a-1 th and a+1 th point) for new point
+                double x = rand() % static_cast<int>(tempRouteX[a] - tempRouteX[a - 2] + 1) + tempRouteX[a - 2];
+                double y = rand() % static_cast<int>(tempRouteY[a] - tempRouteY[a - 2] + 1) + tempRouteY[a - 2];
 
-            UpdateSolution(tempbestRouteX, tempbestRouteY, tempRouteX, tempRouteY, T, tempbestthreat);
+                if( ( x!=tempRouteX[a-2] || y!=tempRouteY[a-2] ) && ( x!=tempRouteX[a] || y!=tempRouteY[a] ) )
+                {
+                    // changing the coordinate
+                    cout<<"Point change "<<x<<" "<<y<<endl<<"pre: "<<tempRouteX[a-2]<<" "<<tempRouteY[a-2]<<endl<<"next: "<<tempRouteX[a]<<" "<<tempRouteY[a]<<endl;
+                    tempRouteX[a - 1] = x;
+                    tempRouteY[a - 1] = y;
+
+                    UpdateSolution(tempbestRouteX, tempbestRouteY, tempRouteX, tempRouteY, T, tempbestthreat);
+
+                }
+
+            T--; // only if operation is effective that T minus
         }
-        T--; // only if operation is effective that T minus
-    }
 
-    // 11~14 for changing the coordinate of a point
-    else if(choose <= 14 && temppoints != 2)
-    {
-        for(; k > 0; k--)
+        for(int i = 0; i < max_point; i++) // record the changed route
         {
-            // making a temp route
-            double tempRouteX[max_point], tempRouteY[max_point];
-
-            for(int i = 0; i < max_point; i++)
-            {
-                tempRouteX[i] = X[i];
-                tempRouteY[i] = Y[i];
-            }
-
-            // making a random integer between 2 to len-1
-            int a = rand() % (temppoints - 2) + 2;
-
-            // finding a good coordinate(near the line of a-1 th and a+1 th point) for new point
-            double x = rand() % static_cast<int>(tempRouteX[a] - tempRouteX[a - 2] + 1) + tempRouteX[a - 2];
-            double y = rand() % static_cast<int>(tempRouteY[a] - tempRouteY[a - 2] + 1) + tempRouteY[a - 2];
-
-            // changing the coordinate
-            tempRouteX[a - 1] = x;
-            tempRouteY[a - 1] = y;
-
-            UpdateSolution(tempbestRouteX, tempbestRouteY, tempRouteX, tempRouteY, T, tempbestthreat);
+            X[i] = tempbestRouteX[i];
+            Y[i] = tempbestRouteY[i];
         }
-        T--; // only if operation is effective that T minus
-    }
-
-    for(int i = 0; i < max_point; i++) // record the changed route
-    {
-        X[i] = tempbestRouteX[i];
-        Y[i] = tempbestRouteY[i];
     }
 }
 
@@ -234,13 +257,14 @@ void UpdateSolution(double tempbestRouteX[], double tempbestRouteY[], double tem
             tempbestRouteY[i] = tempRouteY[i];
         }
 
+        tempbestthreat = tempthreat;
 
     }
 
     else
     {
         double deltathreat = tempthreat - tempbestthreat;
-        if(rand() <= exp((-deltathreat) / T) * RAND_MAX) // decide whether to accept worse situation # can be adjusted
+        if(rand() <= exp((-deltathreat) / T) * RAND_MAX * (1 / 2)) // decide whether to accept worse situation # can be adjusted
         {
             for(int i = 0; i < max_point; i++)
             {
@@ -248,6 +272,9 @@ void UpdateSolution(double tempbestRouteX[], double tempbestRouteY[], double tem
                 tempbestRouteY[i] = tempRouteY[i];
             }
         }
+
+        tempbestthreat = tempthreat;
+
     }
 }
 
@@ -274,9 +301,16 @@ double threat(double routeX[], double routeY[]) // # must implement right threat
 	double threat = 0;
 	double leftdis = 0;/*the distance left*/
 	double dis ;
+/*
+	for(int i=0;i<len+1;i++)
+        cout<<routeX[i]<<" ";
+    cout<<endl;
+    for(int i=0;i<len+1;i++)
+        cout<<routeY[i]<<" ";
+    cout<<endl;*/
 	for(int i = 1; i < len; i++)
 	{
-		double DisBetDots = sqrt(pow(routeX[i] - routeX[i - 1], 2) + pow(routeY[i] - routeY[i - 1], 2));
+		double DisBetDots = sqrt(1.0*pow(routeX[i]- routeX[i - 1], 2.0) + pow(routeY[i] - routeY[i - 1], 2.0));
 
 		int j = 0;
 
@@ -293,20 +327,25 @@ double threat(double routeX[], double routeY[]) // # must implement right threat
 				newY = newY + (routeY[i] - routeY[i - 1]) / DisBetDots;
 			}
 
+
 			for(int k = 0; k < m; k++)
 			{
-				dis = sqrt(pow(X[k] - newX, 2) + pow(Y[k] - newY, 2));
+				dis = sqrt(1.0*pow(X[k] - newX, 2.0) + pow(Y[k] - newY, 2.0));
 				if(dis > R[k])
 					continue;
 				threat = threat + P[k] * ((R[k] - dis) / R[k]);
+                //cout<<"?" <<threat<<endl;
 			}
 
 		}
 
-		leftdis = sqrt(pow(routeX[i] - newX, 2) + pow(routeY[i] - newY, 2));
+		leftdis = sqrt(1.0*pow(routeX[i] - newX, 2) + pow(routeY[i] - newY, 2));
 
 	}
+	//cout<<"?"<<threat<<endl;
+	//cout<<"len "<<len<<endl;
 	threat = threat + w * (len - 2);
 
+    //cout<<"thr"<<threat<<endl;
     return threat;
 }
